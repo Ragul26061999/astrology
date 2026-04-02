@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { id: 'birth-chart', label: 'Birth Chart Calculator', icon: Calculator, href: '/birth-chart' },
   { id: 'matches', label: 'Astrology Matches', icon: Heart, href: '/matches' },
   { id: 'atonement', label: 'Atonement', icon: SparklesIcon, href: '#' },
-  { id: 'task-notes', label: 'Task Notes', icon: StickyNote, href: '#' },
+  { id: 'clients', label: 'Clients', icon: User, href: '/clients' },
 ]
 
 const FloatingStar = ({ size, top, left, delay }: { size: number, top: string, left: string, delay: number }) => (

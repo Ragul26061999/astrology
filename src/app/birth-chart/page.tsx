@@ -11,6 +11,21 @@ import KundaliChart from '@/components/astrology/KundaliChart'
 import PlanetaryTable from '@/components/astrology/PlanetaryTable'
 import DashaTimeline from '@/components/astrology/DashaTimeline'
 
+const NAKSHATRAS = [
+  "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira",
+  "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha",
+  "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra",
+  "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula",
+  "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
+  "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+];
+
+function getNakshatra(moonLongitude: number): string {
+  const nakshatraSize = 360 / 27; // Exactly 13.3333333... degrees
+  const index = Math.floor(moonLongitude / nakshatraSize) % 27;
+  return NAKSHATRAS[index] || "Unknown";
+}
+
 export default function BirthChartPage() {
   const [birthDate, setBirthDate] = useState('')
   const [birthTime, setBirthTime] = useState('')
@@ -229,11 +244,11 @@ export default function BirthChartPage() {
                   <div className="grid grid-cols-2 gap-4 mt-8">
                      <div className="p-5 rounded-3xl bg-slate-950/60 border border-white/5 text-center space-y-1">
                         <div className="text-[10px] font-black text-amber-500/40 uppercase tracking-[0.2em]">Sign</div>
-                        <div className="text-xl font-black text-white uppercase italic">{RASHI_NAMES[chart.moonSign.rashi - 1]}</div>
+                        <div className="text-xl font-black text-white uppercase italic">{RASHI_NAMES[chart.positions.moon.rashi - 1]}</div>
                      </div>
                      <div className="p-5 rounded-3xl bg-slate-950/60 border border-white/5 text-center space-y-1">
                         <div className="text-[10px] font-black text-amber-500/40 uppercase tracking-[0.2em]">Star</div>
-                        <div className="text-xl font-black text-white uppercase italic">{chart.moonSign.nakshatra}</div>
+                        <div className="text-xl font-black text-white uppercase italic leading-none">{getNakshatra(chart.positions.moon.longitude)}</div>
                      </div>
                   </div>
                 </div>

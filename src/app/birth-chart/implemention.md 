@@ -1,0 +1,245 @@
+# 🌙 Nakshatra (Star) Calculation Logic
+
+## 📌 Overview
+
+This document explains how to calculate **Nakshatra (Star)** based on:
+
+* Date of Birth
+* Time of Birth
+* Place of Birth
+
+This is based on **Vedic Astrology**, where Nakshatra depends on the **Moon's position** at the time of birth.
+
+---
+
+## 🧠 Core Concept
+
+👉 Nakshatra is determined by the **longitude of the Moon** in the sky at a given time.
+
+* Full zodiac = **360°**
+* Total Nakshatras = **27**
+* Each Nakshatra = **13°20' (13.333333...° or exactly 360/27)**
+
+---
+
+## ⚙️ Step-by-Step Logic
+
+### Step 1: Convert Date, Time, Place → UTC Time
+
+* Input:
+
+  * Date (DD-MM-YYYY)
+  * Time (HH:MM)
+  * Place (Latitude, Longitude)
+
+* Convert local time to **UTC**
+
+* Adjust using timezone (e.g., IST = UTC +5:30)
+
+---
+
+### Step 2: Convert to Julian Day (JD)
+
+Use formula:
+
+```
+JD = (367 × Year)
+     - INT[(7 × (Year + INT[(Month + 9)/12])) / 4]
+     + INT[(275 × Month)/9]
+     + Day + 1721013.5
+     + (Time in decimal hours / 24)
+```
+
+---
+
+### Step 3: Calculate Moon Longitude
+
+Use astronomical algorithms or ephemeris data.
+
+👉 Recommended libraries:
+
+* Swiss Ephemeris (accurate)
+* NASA JPL data
+* PyEphem / Skyfield
+
+Output:
+
+```
+Moon Longitude = value in degrees (0° to 360°)
+```
+
+---
+
+### Step 4: Determine Nakshatra Index
+
+Formula:
+
+```
+Nakshatra Index = FLOOR (Moon Longitude / (360 / 27))
+```
+
+Range:
+
+* 0 → 26 (total 27 Nakshatras)
+
+---
+
+### Step 5: Map Index to Nakshatra Name
+
+| Index | Nakshatra         |
+| ----- | ----------------- |
+| 0     | Ashwini           |
+| 1     | Bharani           |
+| 2     | Krittika          |
+| 3     | Rohini            |
+| 4     | Mrigashira        |
+| 5     | Ardra             |
+| 6     | Punarvasu         |
+| 7     | Pushya            |
+| 8     | Ashlesha          |
+| 9     | Magha             |
+| 10    | Purva Phalguni    |
+| 11    | Uttara Phalguni   |
+| 12    | Hasta             |
+| 13    | Chitra            |
+| 14    | Swati             |
+| 15    | Vishakha          |
+| 16    | Anuradha          |
+| 17    | Jyeshtha          |
+| 18    | Mula              |
+| 19    | Purva Ashadha     |
+| 20    | Uttara Ashadha    |
+| 21    | Shravana          |
+| 22    | Dhanishta         |
+| 23    | Shatabhisha       |
+| 24    | Purva Bhadrapada  |
+| 25    | Uttara Bhadrapada |
+| 26    | Revati            |
+
+---
+
+## 🧮 Example Calculation
+
+```
+Moon Longitude = 53°
+
+Nakshatra Index = FLOOR(53 / (360/27))
+                 = FLOOR(53 / 13.333333)
+                 = FLOOR(3.975)
+                 = 3
+
+Nakshatra = Rohini
+```
+
+---
+
+## 💻 Pseudocode
+
+```python
+def get_nakshatra(moon_longitude):
+    nakshatra_size = 360 / 27  # Exact calculation
+    index = int((moon_longitude % 360) / nakshatra_size)
+
+    nakshatras = [
+        "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira",
+        "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha",
+        "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra",
+        "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula",
+        "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
+        "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+    ]
+
+    return nakshatras[index]
+```
+
+## 💻 JavaScript / TypeScript Implementation
+
+```typescript
+function getNakshatra(moonLongitude: number): string {
+  const NAKSHATRAS = [
+    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira",
+    "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha",
+    "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra",
+    "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula",
+    "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
+    "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+  ];
+  
+  const nakshatraSize = 360 / 27; // Exactly 13.3333333... degrees
+  const index = Math.floor(moonLongitude / nakshatraSize) % 27;
+  return NAKSHATRAS[index] || "Unknown";
+}
+```
+
+---
+
+## 📍 Important Notes
+
+* Place is required because it affects **Moon position accuracy**
+* Time must be **exact** (even minutes matter)
+* Always use **sidereal zodiac (Lahiri Ayanamsa)** in Vedic astrology
+
+---
+
+## 🚀 Best Implementation Approach
+
+👉 Use **Swiss Ephemeris (Highly Recommended)**
+
+Steps:
+
+1. Input DOB, Time, Place
+2. Convert to Julian Day
+3. Get Moon Longitude using library
+4. Apply formula → Get Nakshatra
+
+---
+
+## 📦 Libraries You Can Use
+
+* Python:
+
+  * `pyswisseph`
+  * `skyfield`
+* JavaScript:
+
+  * `swisseph`
+* API:
+
+  * Astrology API providers
+
+---
+
+## ✅ Final Output Format
+
+```
+Input:
+DOB: 14-01-2000
+Time: 09:10 PM
+Place: Chennai
+
+Output:
+Moon Longitude: XX°
+Nakshatra: Rohini
+Rashi: Taurus
+```
+
+---
+
+## 🎯 Summary
+
+* Nakshatra depends on **Moon Longitude**
+* Divide 360° into 27 parts
+* Each part = one Nakshatra
+* Accurate calculation requires **astronomy data**
+
+---
+
+## 🔥 Pro Tip
+
+If you're building a project:
+👉 DO NOT calculate Moon position manually
+👉 Always use **Swiss Ephemeris** for accuracy
+
+---
+
+END
