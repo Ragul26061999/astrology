@@ -58,9 +58,11 @@ const AstrologyIcon3D = ({
   >
     <div style={{ 
       transformStyle: 'preserve-3d',
-      textShadow: '0 0 20px rgba(251, 191, 36, 0.8), 0 0 40px rgba(251, 191, 36, 0.4)'
+      textShadow: '0 0 15px rgba(180, 83, 9, 0.4), 0 0 30px rgba(180, 83, 9, 0.2)'
     }}>
-      {children}
+      <div className="text-amber-700/80">
+        {children}
+      </div>
     </div>
   </motion.div>
 )
@@ -75,8 +77,9 @@ const FloatingStar = ({ delay, size, top, left }: { delay: number; size: number;
       height: size,
       top,
       left,
-      background: 'radial-gradient(circle, #fbbf24 0%, #f59e0b 50%, transparent 70%)',
-      boxShadow: '0 0 10px #fbbf24, 0 0 20px #f59e0b',
+      background: 'radial-gradient(circle, #fbbf24 0%, #d97706 50%, transparent 70%)',
+      boxShadow: '0 0 8px rgba(217, 119, 6, 0.3)',
+      opacity: 0.4
     }}
   />
 )
@@ -130,11 +133,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex overflow-hidden font-sans relative" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Astrology Theme Background - Deep purple/blue with stars */}
+      {/* Astrology Theme Background - Warm ivory/sand with subtle stars */}
       <div 
         className="absolute inset-0 z-0"
         style={{
-          background: 'linear-gradient(135deg, #0f0524 0%, #1a0b2e 30%, #162044 60%, #0d1a33 100%)',
+          background: 'radial-gradient(circle at top right, #FFF9F0 0%, #F5F1E9 100%)',
         }}
       >
         {/* Stars */}
@@ -149,37 +152,37 @@ export default function LoginPage() {
         ))}
 
         {/* Constellation lines */}
-        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-          <line x1="10%" y1="15%" x2="15%" y2="25%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="15%" y1="25%" x2="25%" y2="20%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="25%" y1="20%" x2="30%" y2="35%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="70%" y1="10%" x2="75%" y2="20%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="75%" y1="20%" x2="85%" y2="15%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="80%" y1="60%" x2="85%" y2="75%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="85%" y1="75%" x2="90%" y2="70%" stroke="#fbbf24" strokeWidth="0.5" />
-          <circle cx="10%" cy="15%" r="2" fill="#fbbf24" />
-          <circle cx="15%" cy="25%" r="1.5" fill="#fbbf24" />
-          <circle cx="25%" cy="20%" r="2.5" fill="#fbbf24" />
-          <circle cx="30%" cy="35%" r="1.5" fill="#f59e0b" />
-          <circle cx="70%" cy="10%" r="2" fill="#fbbf24" />
-          <circle cx="75%" cy="20%" r="1.5" fill="#fbbf24" />
-          <circle cx="85%" cy="15%" r="2" fill="#f59e0b" />
-          <circle cx="80%" cy="60%" r="2.5" fill="#fbbf24" />
-          <circle cx="85%" cy="75%" r="1.5" fill="#fbbf24" />
-          <circle cx="90%" cy="70%" r="2" fill="#f59e0b" />
+        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+          <line x1="10%" y1="15%" x2="15%" y2="25%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="15%" y1="25%" x2="25%" y2="20%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="25%" y1="20%" x2="30%" y2="35%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="70%" y1="10%" x2="75%" y2="20%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="75%" y1="20%" x2="85%" y2="15%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="80%" y1="60%" x2="85%" y2="75%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="85%" y1="75%" x2="90%" y2="70%" stroke="#d97706" strokeWidth="0.5" />
+          <circle cx="10%" cy="15%" r="2" fill="#d97706" />
+          <circle cx="15%" cy="25%" r="1.5" fill="#d97706" />
+          <circle cx="25%" cy="20%" r="2.5" fill="#d97706" />
+          <circle cx="30%" cy="35%" r="1.5" fill="#b45309" />
+          <circle cx="70%" cy="10%" r="2" fill="#d97706" />
+          <circle cx="75%" cy="20%" r="1.5" fill="#d97706" />
+          <circle cx="85%" cy="15%" r="2" fill="#b45309" />
+          <circle cx="80%" cy="60%" r="2.5" fill="#d97706" />
+          <circle cx="85%" cy="75%" r="1.5" fill="#d97706" />
+          <circle cx="90%" cy="70%" r="2" fill="#b45309" />
         </svg>
 
         {/* Zodiac Wheel - Bottom left decoration */}
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 opacity-10 pointer-events-none">
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 opacity-5 pointer-events-none">
           <svg viewBox="0 0 200 200" className="w-full h-full animate-spin" style={{ animationDuration: '60s' }}>
-            <circle cx="100" cy="100" r="95" fill="none" stroke="#fbbf24" strokeWidth="0.5" />
-            <circle cx="100" cy="100" r="75" fill="none" stroke="#fbbf24" strokeWidth="0.5" />
-            <circle cx="100" cy="100" r="55" fill="none" stroke="#fbbf24" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="95" fill="none" stroke="#d97706" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="75" fill="none" stroke="#d97706" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="55" fill="none" stroke="#d97706" strokeWidth="0.5" />
             {/* Star center */}
-            <path d="M100 25 L103 85 L100 90 L97 85 Z" fill="#fbbf24" />
-            <path d="M100 175 L103 115 L100 110 L97 115 Z" fill="#fbbf24" />
-            <path d="M25 100 L85 97 L90 100 L85 103 Z" fill="#fbbf24" />
-            <path d="M175 100 L115 97 L110 100 L115 103 Z" fill="#fbbf24" />
+            <path d="M100 25 L103 85 L100 90 L97 85 Z" fill="#d97706" />
+            <path d="M100 175 L103 115 L100 110 L97 115 Z" fill="#d97706" />
+            <path d="M25 100 L85 97 L90 100 L85 103 Z" fill="#d97706" />
+            <path d="M175 100 L115 97 L110 100 L115 103 Z" fill="#d97706" />
           </svg>
         </div>
 
@@ -210,37 +213,37 @@ export default function LoginPage() {
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
             >
-              <Sparkles className="w-8 h-8 text-amber-400" />
+              <Sparkles className="w-8 h-8 text-amber-600" />
             </motion.div>
-            <h1 className="text-4xl font-bold text-white tracking-tight">
-              Astro<span className="text-amber-400">Veda</span>
+            <h1 className="text-4xl font-black text-amber-900 tracking-tight">
+              Astro<span className="text-amber-600">Veda</span>
             </h1>
           </div>
 
           {/* Welcome heading */}
           <div className="mb-4">
-            <h2 className="text-4xl xl:text-5xl font-bold text-white mb-3">
+            <h2 className="text-4xl xl:text-5xl font-black text-stone-900 mb-3">
               Discover Your<br />
-              <span className="text-amber-400">Cosmic Path</span>
+              <span className="text-amber-700">Cosmic Path</span>
             </h2>
-            <div className="w-16 h-0.5 bg-gradient-to-r from-amber-400 to-purple-500"></div>
+            <div className="w-16 h-1 bg-gradient-to-r from-amber-600 to-orange-500 rounded-full"></div>
           </div>
 
           {/* Description text */}
-          <p className="text-slate-400 text-sm leading-relaxed max-w-sm mb-6">
+          <p className="text-stone-600 text-sm font-bold leading-relaxed max-w-sm mb-6">
             Unlock the mysteries of your birth chart, daily horoscope, and planetary alignments. 
             Your celestial journey begins here.
           </p>
 
           {/* Feature pills */}
           <div className="flex flex-wrap gap-3 mb-8">
-            <span className="px-4 py-2 rounded-full text-xs font-medium text-amber-200 bg-amber-500/10 border border-amber-500/20">
+            <span className="px-4 py-2 rounded-full text-xs font-black text-amber-800 bg-amber-100 border border-amber-200 shadow-sm">
               ✦ Birth Charts
             </span>
-            <span className="px-4 py-2 rounded-full text-xs font-medium text-purple-200 bg-purple-500/10 border border-purple-500/20">
+            <span className="px-4 py-2 rounded-full text-xs font-black text-stone-700 bg-stone-100 border border-stone-200 shadow-sm">
               ☽ Daily Horoscope
             </span>
-            <span className="px-4 py-2 rounded-full text-xs font-medium text-rose-200 bg-rose-500/10 border border-rose-500/20">
+            <span className="px-4 py-2 rounded-full text-xs font-black text-orange-800 bg-orange-50 border border-orange-100 shadow-sm">
               ♥ Compatibility
             </span>
           </div>
@@ -249,10 +252,9 @@ export default function LoginPage() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-fit px-8 py-3 rounded-full font-semibold text-white text-sm flex items-center gap-2"
+            className="w-fit px-8 py-3 rounded-full font-black text-white text-sm flex items-center gap-2 uppercase tracking-widest shadow-xl"
             style={{
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
-              boxShadow: '0 4px 20px rgba(245, 158, 11, 0.4), 0 0 30px rgba(251, 191, 36, 0.2)',
+              background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
             }}
           >
             <Star className="w-4 h-4" />
@@ -260,10 +262,10 @@ export default function LoginPage() {
           </motion.button>
 
           {/* Astrology decoration */}
-          <div className="mt-10 flex items-center gap-3 text-amber-400/60 text-xs">
+          <div className="mt-10 flex items-center gap-3 text-amber-800/40 text-xs font-black uppercase tracking-widest">
             <Moon className="w-4 h-4" />
             <span>As above, so below</span>
-            <div className="w-12 h-px bg-gradient-to-r from-amber-400/60 to-transparent"></div>
+            <div className="w-12 h-px bg-gradient-to-r from-amber-800/40 to-transparent"></div>
           </div>
         </div>
 
@@ -333,27 +335,27 @@ export default function LoginPage() {
               </AstrologyIcon3D>
 
               <div
-                className="rounded-2xl p-8 sm:p-10 relative z-10"
+                className="rounded-3xl p-8 sm:p-10 relative z-10"
                 style={{
-                  background: 'rgba(15, 5, 36, 0.7)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(251, 191, 36, 0.2)',
-                  boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 40px rgba(251, 191, 36, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.85)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(217, 119, 6, 0.2)',
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.08), 0 0 40px rgba(217, 119, 6, 0.05)',
                 }}
               >
-              {/* Sign In heading with star */}
-              <div className="flex items-center justify-center gap-2 mb-8">
-                <Star className="w-5 h-5 text-amber-400" />
-                <h3 className="text-2xl font-semibold text-white">
+               {/* Sign In heading with star */}
+               <div className="flex items-center justify-center gap-2 mb-8">
+                <Star className="w-5 h-5 text-amber-600" />
+                <h3 className="text-2xl font-black text-stone-900 uppercase tracking-tight">
                   Sign In
                 </h3>
-                <Star className="w-5 h-5 text-amber-400" />
+                <Star className="w-5 h-5 text-amber-600" />
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">
-                {/* User Name field - Astrology theme */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-amber-200/80">
+                 {/* User Name field - Astrology theme */}
+                 <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-amber-800 uppercase tracking-widest px-1">
                     User Name
                   </label>
                   <input
@@ -361,18 +363,18 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Hueuy"
-                    className="w-full h-12 rounded-full px-5 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-amber-400/50"
+                    placeholder="Enter Username"
+                    className="w-full h-12 rounded-2xl px-5 text-sm text-stone-900 placeholder-stone-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-amber-500/30 font-bold"
                     style={{
-                      background: 'rgba(100, 116, 139, 0.4)',
-                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                      background: 'rgba(245, 241, 233, 0.6)',
+                      border: '1px solid rgba(217, 119, 6, 0.1)',
                     }}
                   />
                 </div>
 
                 {/* Password field - Astrology theme */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-amber-200/80">
+                  <label className="block text-[10px] font-black text-amber-800 uppercase tracking-widest px-1">
                     Password
                   </label>
                   <div className="relative">
@@ -382,16 +384,16 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••"
-                      className="w-full h-12 rounded-full px-5 pr-12 text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-amber-400/50"
+                      className="w-full h-12 rounded-2xl px-5 pr-12 text-sm text-stone-900 placeholder-stone-400 outline-none transition-all duration-200 focus:ring-2 focus:ring-amber-500/30 font-bold"
                       style={{
-                        background: 'rgba(100, 116, 139, 0.4)',
-                        border: '1px solid rgba(251, 191, 36, 0.2)',
+                        background: 'rgba(245, 241, 233, 0.6)',
+                        border: '1px solid rgba(217, 119, 6, 0.1)',
                       }}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-amber-600 transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -413,16 +415,15 @@ export default function LoginPage() {
 
                 {/* Submit button - Astrology gold theme */}
                 <motion.button
-                  whileHover={{ scale: 1.02, boxShadow: '0 8px 30px rgba(245, 158, 11, 0.5)' }}
+                  whileHover={{ scale: 1.02, boxShadow: '0 8px 30px rgba(217, 119, 6, 0.3)' }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 rounded-full font-semibold text-white text-sm mt-6"
+                  className="w-full h-14 rounded-2xl font-black text-white text-sm mt-6 uppercase tracking-widest shadow-xl"
                   style={{
                     background: loading
                       ? 'rgba(180, 83, 9, 0.5)'
-                      : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
-                    boxShadow: loading ? 'none' : '0 4px 20px rgba(251, 191, 36, 0.4)',
+                      : 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
                     cursor: loading ? 'not-allowed' : 'pointer',
                   }}
                 >
@@ -433,46 +434,6 @@ export default function LoginPage() {
                   )}
                 </motion.button>
               </form>
-
-              {/* Divider */}
-              <div className="mt-6 text-center">
-                <span className="text-slate-400 text-sm">Or</span>
-              </div>
-
-              {/* Social login icons */}
-              <div className="flex justify-center gap-4 mt-4">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:text-amber-400 transition-colors"
-                >
-                  <FacebookIcon />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:text-amber-400 transition-colors"
-                >
-                  <InstagramIcon />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:text-amber-400 transition-colors"
-                >
-                  <TwitterIcon />
-                </motion.button>
-              </div>
-
-              {/* Sign Up link - Astrology theme */}
-              <div className="mt-6 text-center">
-                <span className="text-slate-400 text-sm">
-                  Don&apos;t have an account?{' '}
-                  <a href="#" className="text-amber-400 font-semibold hover:text-amber-300 transition-colors">
-                    Sign Up
-                  </a>
-                </span>
-              </div>
             </div>
             </div>
           </motion.div>

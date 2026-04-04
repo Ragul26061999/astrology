@@ -8,17 +8,10 @@ import AppShell from '@/components/layout/AppShell'
 export default function Home() {
   const cards = [
     {
-      title: 'Birth Chart',
-      desc: 'Decode your planetary blueprint with high-precision calculations.',
-      icon: Calculator,
-      href: '/birth-chart',
-      color: 'amber'
-    },
-    {
       title: 'Match Making',
       desc: 'Analyze cosmic compatibility between two souls.',
       icon: Heart,
-      href: '#',
+      href: '/matches',
       color: 'rose'
     },
     {

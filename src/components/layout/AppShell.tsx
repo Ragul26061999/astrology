@@ -9,18 +9,17 @@ import Link from 'next/link'
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: Home, href: '/' },
-  { id: 'birth-chart', label: 'Birth Chart Calculator', icon: Calculator, href: '/birth-chart' },
+  { id: 'astrology', label: 'Astrology', icon: Moon, href: '/astrology' },
   { id: 'matches', label: 'Astrology Matches', icon: Heart, href: '/matches' },
   { id: 'atonement', label: 'Atonement', icon: SparklesIcon, href: '#' },
-  { id: 'clients', label: 'Clients', icon: User, href: '/clients' },
 ]
 
 const FloatingStar = ({ size, top, left, delay }: { size: number, top: string, left: string, delay: number }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0 }}
-    animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.2, 1] }}
+    animate={{ opacity: [0.1, 0.4, 0.1], scale: [1, 1.2, 1] }}
     transition={{ duration: 3 + Math.random() * 4, repeat: Infinity, delay }}
-    className="absolute rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+    className="absolute rounded-full bg-amber-400/30 shadow-[0_0_8px_rgba(251,191,36,0.2)]"
     style={{ width: size, height: size, top, left }}
   />
 )
@@ -67,20 +66,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden text-slate-100" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen flex relative overflow-hidden text-stone-900" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Background Layer */}
-      <div className="absolute inset-0 z-0 bg-[#0f0524]" style={{
-        background: 'linear-gradient(135deg, #0f0524 0%, #1a0b2e 30%, #162044 60%, #0d1a33 100%)',
+      <div className="absolute inset-0 z-0 bg-[#FDFCF9]" style={{
+        background: 'radial-gradient(circle at top right, #FFF9F0 0%, #F5F1E9 100%)',
       }}>
         {stars.map((star) => (
           <FloatingStar key={star.id} {...star} />
         ))}
         
         {/* Constellation lines */}
-        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-          <line x1="10%" y1="15%" x2="15%" y2="25%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="15%" y1="25%" x2="25%" y2="20%" stroke="#fbbf24" strokeWidth="0.5" />
-          <line x1="80%" y1="60%" x2="85%" y2="75%" stroke="#fbbf24" strokeWidth="0.5" />
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <line x1="10%" y1="15%" x2="15%" y2="25%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="15%" y1="25%" x2="25%" y2="20%" stroke="#d97706" strokeWidth="0.5" />
+          <line x1="80%" y1="60%" x2="85%" y2="75%" stroke="#d97706" strokeWidth="0.5" />
         </svg>
       </div>
 
@@ -91,14 +90,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             initial={{ x: -280 }}
             animate={{ x: 0 }}
             exit={{ x: -280 }}
-            className="fixed left-0 top-0 h-full w-[280px] z-40 flex flex-col border-r border-amber-500/20 bg-slate-900/80 backdrop-blur-3xl"
+            className="fixed left-0 top-0 h-full w-[280px] z-40 flex flex-col border-r border-amber-200 bg-white/80 backdrop-blur-3xl shadow-xl"
           >
-            <div className="p-6 border-b border-amber-400/20">
-              <div className="flex items-center gap-3 text-white">
-                <SparklesIcon className="w-8 h-8 text-amber-400" />
+            <div className="p-6 border-b border-amber-100">
+              <div className="flex items-center gap-3 text-stone-900">
+                <SparklesIcon className="w-8 h-8 text-amber-600" />
                 <div>
-                  <div className="font-black uppercase tracking-tighter">AstroVeda</div>
-                  <div className="text-[9px] text-amber-500 uppercase tracking-[0.3em]">Cosmic Portal</div>
+                  <div className="font-black uppercase tracking-tighter text-amber-900">AstroVeda</div>
+                  <div className="text-[9px] text-amber-600 uppercase tracking-[0.3em] font-bold">Cosmic Portal</div>
                 </div>
               </div>
             </div>
@@ -108,10 +107,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
                     pathname === item.href
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      ? 'bg-amber-600/10 text-amber-700 border border-amber-600/20 shadow-sm'
+                      : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900'
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -120,16 +119,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
 
-            <div className="p-4 border-t border-amber-400/20">
+            <div className="p-4 border-t border-amber-100">
               {user && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 text-[10px] text-slate-400 uppercase tracking-widest leading-none">
-                    <User className="w-3 h-3 text-amber-400" />
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-stone-50 text-[10px] text-stone-500 uppercase tracking-widest leading-none border border-stone-100 overflow-hidden">
+                    <User className="w-3 h-3 text-amber-600 shrink-0" />
                     <span className="truncate">{user.email}</span>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold transition-all border border-rose-500/20 uppercase tracking-widest"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-black transition-all border border-rose-200 uppercase tracking-widest"
                   >
                     <LogOut className="w-3 h-3" />
                     Logout
@@ -146,14 +145,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <header className="p-6 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors text-white border border-white/10 bg-white/5 backdrop-blur-xl"
+            className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white transition-colors text-stone-900 border border-stone-200 bg-white shadow-sm"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           
-          <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            <span className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">{status}</span>
+          <div className="px-4 py-1.5 rounded-full bg-white border border-stone-200 flex items-center gap-2 shadow-sm">
+            <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <span className="text-[10px] text-stone-500 uppercase tracking-[0.2em] font-bold">{status}</span>
           </div>
         </header>
 
