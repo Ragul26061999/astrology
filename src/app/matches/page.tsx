@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import { Download, Upload, Users, Activity, CheckCircle, XCircle, AlertTriangle, Filter, Search, UserPlus, MapPin, Clock, Calendar, X, Eye, Info, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 
 export default function MatchesPage() {
+  const router = useRouter();
+
   // Navigation State
   const [activeModal, setActiveModal] = useState<"register" | "upload" | null>(null);
   
@@ -38,9 +41,9 @@ export default function MatchesPage() {
   const [selectedGender, setSelectedGender] = useState<"male" | "female" | "">("");
   const [selectedProfileId, setSelectedProfileId] = useState("");
   
-  // Match Result
   const [matchLoading, setMatchLoading] = useState(false);
   const [matches, setMatches] = useState<any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */>([]);
+  const [pairingProfileId, setPairingProfileId] = useState<string | null>(null);
 
   // Filter State
   const [minScore, setMinScore] = useState<number>(0);
@@ -168,6 +171,35 @@ export default function MatchesPage() {
     }
   };
 
+  const pairCouple = async (targetId: string) => {
+      if (!selectedProfileId || !targetId) return;
+      
+      const groomId = selectedGender === "male" ? selectedProfileId : targetId;
+      const brideId = selectedGender === "female" ? selectedProfileId : targetId;
+      
+      setPairingProfileId(targetId);
+      try {
+          const res = await fetch("/api/matches/pairs", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ groom_id: groomId, bride_id: brideId })
+          });
+          const data = await res.json();
+          if (data.success) {
+              setMatches(matches.filter(m => m.targetProfile.id !== targetId));
+              alert("Successfully paired! These profiles will no longer appear in future searches.");
+              fetchProfiles(); // Refresh to remove the currently selected profile if it was closed
+              router.push("/paired-profiles");
+          } else {
+              alert("Failed to pair: " + data.error);
+          }
+      } catch (err: any) {
+          alert("Error: " + err.message);
+      } finally {
+          setPairingProfileId(null);
+      }
+  };
+
   const calculateAge = (dob: string) => {
     if (!dob) return 0;
     const diff = Date.now() - new Date(dob).getTime();
@@ -218,6 +250,13 @@ export default function MatchesPage() {
               </div>
 
               <div className="flex gap-3">
+                   <button 
+                    onClick={() => router.push("profiles")}
+                    className="group bg-stone-100 hover:bg-amber-600 hover:text-white px-5 py-3 rounded-2xl border border-stone-200 transition-all flex items-center gap-2 font-black shadow-sm"
+                  >
+                        <Users size={18} className="transition-transform group-hover:scale-110" />
+                        Profile
+                  </button>
                   <button 
                     onClick={() => setActiveModal("register")}
                     className="group bg-stone-100 hover:bg-amber-600 hover:text-white px-5 py-3 rounded-2xl border border-stone-200 transition-all flex items-center gap-2 font-black shadow-sm"
@@ -414,12 +453,21 @@ export default function MatchesPage() {
                                                 <span className="text-[9px] text-emerald-500 uppercase tracking-widest font-black flex items-center gap-1.5 opacity-60"><CheckCircle size={10} /> Cosmic Path Clear</span>
                                             )}
                                             
-                                            <button 
-                                                onClick={() => setSelectedMatchForDetails(m)}
-                                                className="bg-stone-100 hover:bg-amber-600 hover:text-white px-4 py-2 rounded-xl border border-stone-200 transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group shadow-sm"
-                                            >
-                                                <Eye size={12} className="group-hover:scale-125 transition-transform" /> Full Data
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => pairCouple(target.id)}
+                                                    disabled={pairingProfileId === target.id}
+                                                    className="bg-amber-100 hover:bg-amber-600 text-amber-700 hover:text-white px-4 py-2 rounded-xl border border-amber-200 transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm disabled:opacity-50"
+                                                >
+                                                    {pairingProfileId === target.id ? "Pairing..." : "Pair Couple"}
+                                                </button>
+                                                <button 
+                                                    onClick={() => setSelectedMatchForDetails(m)}
+                                                    className="bg-stone-100 hover:bg-amber-600 hover:text-white px-4 py-2 rounded-xl border border-stone-200 transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group shadow-sm"
+                                                >
+                                                    <Eye size={12} className="group-hover:scale-125 transition-transform" /> Full Data
+                                                </button>
+                                            </div>
                                          </div>
                                     </div>
                                 </motion.div>

@@ -51,10 +51,10 @@ export default function AstrologyPage() {
   const fetchRecords = async () => {
     setFetchingRecords(true);
     try {
-      const res = await fetch('/api/matches/profiles');
+      const res = await fetch('/api/astrology/records');
       const data = await res.json();
       if (data.success) {
-        setRecords(data.profiles);
+        setRecords(data.records);
       }
     } catch (err) {
       console.error(err);
@@ -361,7 +361,7 @@ export default function AstrologyPage() {
                             {records.map((r) => (
                               <tr key={r.id} className="group hover:bg-amber-50/50 transition-colors border-b border-stone-50">
                                 <td className="py-5 px-4">
-                                  <p className="font-black text-stone-900 group-hover:text-amber-800 transition-colors">{r.full_name}</p>
+                                  <p className="font-black text-stone-900 group-hover:text-amber-800 transition-colors">{r.name}</p>
                                   <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{r.id.substring(0,8)}</p>
                                 </td>
                                 <td className="py-5 px-4 font-bold text-xs text-stone-500">{r.gender}</td>
@@ -380,7 +380,7 @@ export default function AstrologyPage() {
                                     onClick={() => {
                                       setFormData({
                                         ...formData,
-                                        name: r.full_name,
+                                        name: r.name,
                                         gender: r.gender,
                                         date: r.birth_date,
                                         time: r.birth_time,

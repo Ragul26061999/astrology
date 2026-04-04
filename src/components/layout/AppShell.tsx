@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Moon, Star, Sun, LogOut, User, Calculator, Calendar, Clock, MapPin, Home, Heart, Sparkles as SparklesIcon, StickyNote, Menu, X, ClipboardList } from 'lucide-react'
+import { Moon, Star, Sun, LogOut, User, Users, Calculator, Calendar, Clock, MapPin, Home, Heart, Sparkles as SparklesIcon, StickyNote, Menu, X, ClipboardList } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
@@ -11,7 +11,8 @@ const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: Home, href: '/' },
   { id: 'astrology', label: 'Astrology', icon: Moon, href: '/astrology' },
   { id: 'matches', label: 'Astrology Matches', icon: Heart, href: '/matches' },
-  { id: 'atonement', label: 'Atonement', icon: SparklesIcon, href: '#' },
+  { id: 'profiles', label: 'Match Profiles', icon: Users, href: '/profiles' },
+  { id: 'paired-profiles', label: 'Paired Profiles', icon: Users, href: '/paired-profiles' },
 ]
 
 const FloatingStar = ({ size, top, left, delay }: { size: number, top: string, left: string, delay: number }) => (
@@ -141,7 +142,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className={`flex-1 flex flex-col transition-all duration-300 relative z-10 ${sidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
+      <main className={`flex-1 flex flex-col transition-all duration-300 relative ${sidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
         <header className="p-6 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -159,10 +160,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-y-auto px-6 pb-12">
           {children}
         </div>
-        
-        <footer className="p-6 text-center text-slate-600 text-[10px] font-black uppercase tracking-[0.4em] opacity-50">
-          AstroVeda Propulsion • Advanced Astrology Intelligence
-        </footer>
       </main>
     </div>
   )

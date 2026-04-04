@@ -18,5 +18,22 @@ CREATE TABLE public.match_profiles (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Note: add appropriate RLS policies if required for your use case
--- ALTER TABLE public.match_profiles ENABLE ROW LEVEL SECURITY;
+-- Enable RLS
+ALTER TABLE public.match_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Add policies
+-- Allow everyone to view profiles
+CREATE POLICY "Allow anyone to view profiles" ON public.match_profiles
+    FOR SELECT TO public USING (true);
+
+-- Allow everyone to create profiles
+CREATE POLICY "Allow anyone to create profiles" ON public.match_profiles
+    FOR INSERT TO public WITH CHECK (true);
+
+-- Allow everyone to update profiles
+CREATE POLICY "Allow anyone to update profiles" ON public.match_profiles
+    FOR UPDATE TO public USING (true);
+
+-- Allow everyone to delete profiles
+CREATE POLICY "Allow anyone to delete profiles" ON public.match_profiles
+    FOR DELETE TO public USING (true);

@@ -32,7 +32,19 @@ export async function POST(request: Request) {
             
         if (targetError) throw targetError;
 
-        const matches = targetProfiles.map((targetProfile: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
+        let pairedIds = new Set();
+        try {
+            const { data: paired, error: pairedError } = await supabase.from('paired_profiles').select('groom_id, bride_id');
+            if (!pairedError && paired) {
+                pairedIds = new Set(paired.flatMap((p: { groom_id: string, bride_id: string }) => [p.groom_id, p.bride_id]));
+            }
+        } catch (e) {
+            // ignore if table doesn't exist yet
+        }
+
+        const availableTargets = targetProfiles.filter((p: any) => !pairedIds.has(p.id));
+
+        const matches = availableTargets.map((targetProfile: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
             const boyNakshatra = sourceProfile.gender.toLowerCase() === 'male' ? sourceProfile.nakshatram : targetProfile.nakshatram;
             const boyRasi = sourceProfile.gender.toLowerCase() === 'male' ? sourceProfile.rasi : targetProfile.rasi;
             const girlNakshatra = sourceProfile.gender.toLowerCase() === 'female' ? sourceProfile.nakshatram : targetProfile.nakshatram;
