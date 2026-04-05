@@ -32,6 +32,7 @@ export default function MatchesPage() {
   });
   const [registering, setRegistering] = useState(false);
   const [regMessage, setRegMessage] = useState("");
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   // Profiles State
   const [profiles, setProfiles] = useState<any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */>([]);
@@ -49,6 +50,33 @@ export default function MatchesPage() {
   const [minScore, setMinScore] = useState<number>(0);
   const [maxAge, setMaxAge] = useState<number | "">("");
   const [filterRajju, setFilterRajju] = useState<boolean>(false);
+
+  // Debounced Place to Lat/Lng calculation for Manual Registration
+  useEffect(() => {
+    if (!regForm.place_of_birth_city || regForm.place_of_birth_city.trim().length < 3) return;
+
+    const timer = setTimeout(async () => {
+      setIsGeocoding(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(regForm.place_of_birth_city)}&limit=1`);
+        const results = await res.json();
+        if (results && results.length > 0) {
+          const { lat, lon } = results[0];
+          setRegForm(prev => ({ 
+            ...prev, 
+            latitude: parseFloat(lat).toFixed(4), 
+            longitude: parseFloat(lon).toFixed(4) 
+          }));
+        }
+      } catch (err) {
+        console.error("Geocoding failed:", err);
+      } finally {
+        setIsGeocoding(false);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [regForm.place_of_birth_city]);
 
   useEffect(() => {
     fetchProfiles();
@@ -502,13 +530,13 @@ export default function MatchesPage() {
                                 <div className="bg-amber-100 p-3 rounded-2xl border border-amber-200">
                                     <UserPlus className="text-amber-600 size-6" />
                                 </div>
-                                <div>
-                                    <h2 className="text-2xl font-black text-stone-900 tracking-tight">SOLO REGISTER</h2>
-                                    <p className="text-stone-500 text-sm font-bold">Add a new seeker to the cosmic database manually.</p>
+                                <div className="space-y-1">
+                                    <h2 className="text-2xl font-black text-stone-900 tracking-tight leading-none">SOLO REGISTER</h2>
+                                    <p className="text-stone-500 text-xs font-bold leading-tight">Add a new seeker to the cosmic database manually.</p>
                                 </div>
                             </div>
 
-                            <form onSubmit={handleManualRegister} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <form onSubmit={handleManualRegister} className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                                 <div className="space-y-2">
                                      <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest px-1">Full Name</label>
                                      <input 
@@ -534,7 +562,7 @@ export default function MatchesPage() {
                                 <div className="space-y-2 relative">
                                      <label className="text-[10px] uppercase font-black text-stone-500 tracking-widest px-1 flex justify-between">
                                          <span>Birth Evolution Date</span>
-                                         {regForm.date_of_birth && <span className="text-amber-600">Calculated Age: {calculateAge(regForm.date_of_birth)}</span>}
+                                         {regForm.date_of_birth && <span className="text-amber-600">CALCULATED AGE: {calculateAge(regForm.date_of_birth)}</span>}
                                      </label>
                                      <div className="relative">
                                         <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 size-4 pointer-events-none" />
@@ -564,11 +592,6 @@ export default function MatchesPage() {
                                         <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 size-4 pointer-events-none" />
                                         <input 
                                             required value={regForm.place_of_birth_city}
-                                            onBlur={() => {
-                                                if (regForm.place_of_birth_city.toLowerCase() === 'chennai') {
-                                                    setRegForm(prev => ({...prev, latitude: '13.0827', longitude: '80.2707'}));
-                                                }
-                                            }}
                                             onChange={e => setRegForm({...regForm, place_of_birth_city: e.target.value})}
                                             placeholder="City of Birth"
                                             className="w-full bg-stone-50 border border-stone-200 rounded-2xl pl-12 pr-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
@@ -577,20 +600,26 @@ export default function MatchesPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                     <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest px-1">Latitude</label>
+                                     <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest px-1">
+                                         Latitude {isGeocoding && <span className="text-amber-600 animate-pulse text-[8px] ml-2 font-normal">(Auto-calculating...)</span>}
+                                     </label>
                                      <input 
-                                        required type="number" step="any" value={regForm.latitude}
+                                        required value={regForm.latitude}
                                         onChange={e => setRegForm({...regForm, latitude: e.target.value})}
-                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
+                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900 placeholder:opacity-30"
+                                        placeholder="0.0000"
                                      />
                                 </div>
 
                                 <div className="space-y-2">
-                                     <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest px-1">Longitude</label>
+                                     <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest px-1">
+                                         Longitude {isGeocoding && <span className="text-amber-600 animate-pulse text-[8px] ml-2 font-normal">(Auto-calculating...)</span>}
+                                     </label>
                                      <input 
-                                        required type="number" step="any" value={regForm.longitude}
+                                        required value={regForm.longitude}
                                         onChange={e => setRegForm({...regForm, longitude: e.target.value})}
-                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
+                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900 placeholder:opacity-30"
+                                        placeholder="0.0000"
                                      />
                                 </div>
 

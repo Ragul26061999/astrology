@@ -1,7 +1,16 @@
 {
   "mcpServers": {
     "supabase": {
-      "serverUrl": "https://mcp.supabase.com/mcp?project_ref=xxodruoqvysjpceowars"
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://xxodruoqvysjpceowars.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4b2RydW9xdnlzanBjZW93YXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODQ3MjEsImV4cCI6MjA5MDM2MDcyMX0.vNTu7ap1lgVt_eZ2u6WWVzmtBR6AHXpbVBjNvyMKQ1s",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4b2RydW9xdnlzanBjZW93YXJzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDc4NDcyMSwiZXhwIjoyMDkwMzYwNzIxfQ._HVt2ownaO4RheG3cMLgqfUHxBTqItvGu8zjjyxkEe8"
+      }
     }
   }
 }

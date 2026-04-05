@@ -14,6 +14,7 @@ CREATE TABLE public.match_profiles (
     nakshatram TEXT,
     nakshatra_pada INTEGER,
     lagnam TEXT,
+    age INTEGER,
     dosham_status BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
