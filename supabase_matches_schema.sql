@@ -16,6 +16,15 @@ CREATE TABLE public.match_profiles (
     lagnam TEXT,
     age INTEGER,
     dosham_status BOOLEAN DEFAULT false,
+    work TEXT,
+    case TEXT,
+    region TEXT,
+    district TEXT,
+    salary TEXT,
+    other_country TEXT,
+    dowry TEXT,
+    business TEXT,
+    photo TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

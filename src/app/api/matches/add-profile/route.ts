@@ -4,16 +4,24 @@ import { getAstrologyData } from '@/utils/astroMath';
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const { 
-            full_name, 
-            gender, 
-            date_of_birth, 
-            time_of_birth, 
-            place_of_birth_city, 
-            latitude, 
-            longitude 
-        } = body;
+        const formData = await request.formData();
+        
+        const full_name = formData.get('full_name') as string;
+        const gender = formData.get('gender') as string;
+        const date_of_birth = formData.get('date_of_birth') as string;
+        const time_of_birth = formData.get('time_of_birth') as string;
+        const place_of_birth_city = formData.get('place_of_birth_city') as string;
+        const latitude = formData.get('latitude') as string;
+        const longitude = formData.get('longitude') as string;
+        const work = formData.get('work') as string;
+        const caseField = formData.get('case') as string;
+        const region = formData.get('region') as string;
+        const district = formData.get('district') as string;
+        const salary = formData.get('salary') as string;
+        const other_country = formData.get('other_country') as string;
+        const dowry = formData.get('dowry') as string;
+        const business = formData.get('business') as string;
+        const photoFile = formData.get('photo') as File | null;
 
         if (!full_name || !gender || !date_of_birth || !time_of_birth || !latitude || !longitude) {
             return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
@@ -49,6 +57,27 @@ export async function POST(request: Request) {
         }
 
         const supabase = await createClient();
+        
+        // Upload photo to Supabase storage if provided
+        let photoUrl: string | null = null;
+        if (photoFile) {
+            const fileExt = photoFile.name.split('.').pop();
+            const fileName = `${full_name.replace(/\s+/g, '_')}_${Date.now()}.${fileExt}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('profile-photos')
+                .upload(fileName, photoFile);
+            
+            if (uploadError) {
+                console.error('Photo upload error:', uploadError);
+                // Continue without photo if upload fails
+            } else {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('profile-photos')
+                    .getPublicUrl(fileName);
+                photoUrl = publicUrl;
+            }
+        }
+
         const { data, error } = await supabase.from('match_profiles').insert([{
             full_name,
             gender,
@@ -62,7 +91,16 @@ export async function POST(request: Request) {
             nakshatra_pada: pada,
             lagnam: astroData.panchangam.lagnam,
             age: age,
-            dosham_status: false
+            dosham_status: false,
+            work: work || null,
+            case: caseField || null,
+            region: region || null,
+            district: district || null,
+            salary: salary || null,
+            other_country: other_country || null,
+            dowry: dowry || null,
+            business: business || null,
+            photo: photoUrl
         }]).select();
 
         if (error) throw error;

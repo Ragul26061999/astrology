@@ -32,8 +32,20 @@ export async function POST(request: Request) {
             { key: 'longitude', aliases: ['longitude', 'lng', 'place_of_birth_lng'] }
         ];
 
+        const optionalHeadersConfig = [
+            { key: 'work', aliases: ['work'] },
+            { key: 'case', aliases: ['case'] },
+            { key: 'region', aliases: ['region'] },
+            { key: 'district', aliases: ['district'] },
+            { key: 'salary', aliases: ['salary'] },
+            { key: 'other_country', aliases: ['other_country'] },
+            { key: 'dowry', aliases: ['dowry'] },
+            { key: 'business', aliases: ['business'] },
+            { key: 'photo', aliases: ['photo'] }
+        ];
+
         const missingKeys = [];
-        const headerMap: Record<string, string> = {}; 
+        const headerMap: Record<string, string> = {};
 
         for (const config of expectedHeadersConfig) {
             const foundHeader = headers.find(h => config.aliases.includes(h));
@@ -41,6 +53,14 @@ export async function POST(request: Request) {
                 headerMap[config.key] = foundHeader;
             } else {
                 missingKeys.push(config.key);
+            }
+        }
+
+        // Map optional headers if present
+        for (const config of optionalHeadersConfig) {
+            const foundHeader = headers.find(h => config.aliases.includes(h));
+            if (foundHeader) {
+                headerMap[config.key] = foundHeader;
             }
         }
         
@@ -58,6 +78,13 @@ export async function POST(request: Request) {
                 const actualHeader = headerMap[config.key];
                 const idx = headers.indexOf(actualHeader);
                 if (idx !== -1) obj[config.key] = values[idx];
+            }
+            for (const config of optionalHeadersConfig) {
+                const actualHeader = headerMap[config.key];
+                if (actualHeader) {
+                    const idx = headers.indexOf(actualHeader);
+                    if (idx !== -1) obj[config.key] = values[idx];
+                }
             }
             return obj;
         });
@@ -119,7 +146,16 @@ export async function POST(request: Request) {
                     nakshatra_pada: pada,
                     lagnam: astroData.panchangam.lagnam,
                     age: age,
-                    dosham_status: false // Need logic for this if required, default false
+                    dosham_status: false,
+                    work: record.work || null,
+                    case: record.case || null,
+                    region: record.region || null,
+                    district: record.district || null,
+                    salary: record.salary || null,
+                    other_country: record.other_country || null,
+                    dowry: record.dowry || null,
+                    business: record.business || null,
+                    photo: record.photo || null
                 });
 
             } catch (err) {

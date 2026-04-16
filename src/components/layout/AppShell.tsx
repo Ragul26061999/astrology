@@ -150,11 +150,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          
-          <div className="px-4 py-1.5 rounded-full bg-white border border-stone-200 flex items-center gap-2 shadow-sm">
-            <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-            <span className="text-[10px] text-stone-500 uppercase tracking-[0.2em] font-bold">{status}</span>
-          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto px-6 pb-12">

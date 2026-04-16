@@ -9,6 +9,13 @@ export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Filter states
+  const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
+  const [minAge, setMinAge] = useState<number | "">("");
+  const [maxAge, setMaxAge] = useState<number | "">("");
+  const [rasiFilter, setRasiFilter] = useState("");
+  const [nakshatraFilter, setNakshatraFilter] = useState("");
 
   useEffect(() => {
     fetchProfiles();
@@ -35,11 +42,33 @@ export default function ProfilesPage() {
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
   };
 
-  const filteredProfiles = profiles.filter(p => 
-    p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.rasi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.nakshatram?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Extract unique Rasi and Nakshatra values for dropdowns
+  const uniqueRasis = [...new Set(profiles.map(p => p.rasi).filter(Boolean))].sort();
+  const uniqueNakshatras = [...new Set(profiles.map(p => p.nakshatram).filter(Boolean))].sort();
+
+  const filteredProfiles = profiles.filter(p => {
+    // Search filter
+    const matchesSearch = 
+      p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.rasi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.nakshatram?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Gender filter
+    const matchesGender = genderFilter === "all" || p.gender.toLowerCase() === genderFilter;
+    
+    // Age filter
+    const age = calculateAge(p.birth_date || p.date_of_birth);
+    const matchesMinAge = minAge === "" || age >= minAge;
+    const matchesMaxAge = maxAge === "" || age <= maxAge;
+    
+    // Rasi filter
+    const matchesRasi = rasiFilter === "" || p.rasi?.toLowerCase() === rasiFilter.toLowerCase();
+    
+    // Nakshatra filter
+    const matchesNakshatra = nakshatraFilter === "" || p.nakshatram?.toLowerCase() === nakshatraFilter.toLowerCase();
+    
+    return matchesSearch && matchesGender && matchesMinAge && matchesMaxAge && matchesRasi && matchesNakshatra;
+  });
 
   return (
     <AppShell>
@@ -47,36 +76,133 @@ export default function ProfilesPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           
           {/* Header Section */}
-          <header className="bg-white/80 backdrop-blur-md border border-amber-200 rounded-[2.5rem] px-8 py-8 shadow-xl relative overflow-hidden group flex flex-col md:flex-row items-center justify-between gap-8">
+          <header className="bg-white/80 backdrop-blur-md border border-amber-200 rounded-[2.5rem] px-8 py-8 shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-3xl -z-10 group-hover:bg-amber-500/10 transition-all"></div>
             
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="bg-amber-100 p-4 rounded-3xl border border-amber-200 shadow-inner group-hover:rotate-6 transition-transform duration-500">
-                <Users className="text-amber-700 size-10" />
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mb-6">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="bg-amber-100 p-4 rounded-3xl border border-amber-200 shadow-inner group-hover:rotate-6 transition-transform duration-500">
+                  <Users className="text-amber-700 size-10" />
+                </div>
+                <div className="text-center md:text-left space-y-1">
+                  <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-700 to-orange-800 tracking-tighter italic uppercase">
+                    Match Profiles Repository
+                  </h1>
+                  <p className="text-stone-500 font-bold uppercase tracking-[0.2em] text-[10px] flex items-center justify-center md:justify-start gap-4">
+                    <span className="w-6 h-px bg-amber-200"></span>
+                    Central Seeker Intelligence Database
+                    <span className="w-6 h-px bg-amber-200"></span>
+                  </p>
+                </div>
               </div>
-              <div className="text-center md:text-left space-y-1">
-                <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-700 to-orange-800 tracking-tighter italic uppercase">
-                  Match Profiles Repository
-                </h1>
-                <p className="text-stone-500 font-bold uppercase tracking-[0.2em] text-[10px] flex items-center justify-center md:justify-start gap-4">
-                  <span className="w-6 h-px bg-amber-200"></span>
-                  Central Seeker Intelligence Database
-                  <span className="w-6 h-px bg-amber-200"></span>
-                </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                  <div className="relative group">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 size-4 group-focus-within:text-amber-600 transition-colors" />
+                      <input 
+                          type="text"
+                          placeholder="Search Seeker..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="bg-stone-50 border border-stone-200 focus:border-amber-500/50 rounded-2xl pl-12 pr-6 py-4 outline-none transition-all font-bold text-sm w-full sm:w-64 shadow-inner"
+                      />
+                  </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 size-4 group-focus-within:text-amber-600 transition-colors" />
-                    <input 
-                        type="text"
-                        placeholder="Search Seeker..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-stone-50 border border-stone-200 focus:border-amber-500/50 rounded-2xl pl-12 pr-6 py-4 outline-none transition-all font-bold text-sm w-full sm:w-64 shadow-inner"
-                    />
+            {/* Filters Section */}
+            <div className="bg-stone-50/50 border border-stone-200 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-3 text-stone-700 mb-4">
+                <Filter size={18} className="text-amber-600" />
+                <span className="font-black uppercase tracking-widest text-xs">Filter Seekers</span>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {/* Gender Filter */}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black text-stone-500 tracking-widest px-1">Gender</label>
+                  <select 
+                    value={genderFilter}
+                    onChange={(e) => setGenderFilter(e.target.value as "all" | "male" | "female")}
+                    className="w-full bg-white border border-stone-200 focus:border-amber-500/50 rounded-xl px-4 py-3 outline-none transition-all font-bold text-sm shadow-inner"
+                  >
+                    <option value="all">All Genders</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
                 </div>
+
+                {/* Min Age Filter */}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black text-stone-500 tracking-widest px-1">Min Age</label>
+                  <input 
+                    type="number"
+                    placeholder="Min"
+                    value={minAge}
+                    onChange={(e) => setMinAge(e.target.value === "" ? "" : Number(e.target.value))}
+                    className="w-full bg-white border border-stone-200 focus:border-amber-500/50 rounded-xl px-4 py-3 outline-none transition-all font-bold text-sm shadow-inner"
+                  />
+                </div>
+
+                {/* Max Age Filter */}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black text-stone-500 tracking-widest px-1">Max Age</label>
+                  <input 
+                    type="number"
+                    placeholder="Max"
+                    value={maxAge}
+                    onChange={(e) => setMaxAge(e.target.value === "" ? "" : Number(e.target.value))}
+                    className="w-full bg-white border border-stone-200 focus:border-amber-500/50 rounded-xl px-4 py-3 outline-none transition-all font-bold text-sm shadow-inner"
+                  />
+                </div>
+
+                {/* Rasi Filter */}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black text-stone-500 tracking-widest px-1">Rasi</label>
+                  <select 
+                    value={rasiFilter}
+                    onChange={(e) => setRasiFilter(e.target.value)}
+                    className="w-full bg-white border border-stone-200 focus:border-amber-500/50 rounded-xl px-4 py-3 outline-none transition-all font-bold text-sm shadow-inner"
+                  >
+                    <option value="">All Rasis</option>
+                    {uniqueRasis.map(rasi => (
+                      <option key={rasi} value={rasi}>{rasi}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Nakshatra Filter */}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black text-stone-500 tracking-widest px-1">Nakshatra</label>
+                  <select 
+                    value={nakshatraFilter}
+                    onChange={(e) => setNakshatraFilter(e.target.value)}
+                    className="w-full bg-white border border-stone-200 focus:border-amber-500/50 rounded-xl px-4 py-3 outline-none transition-all font-bold text-sm shadow-inner"
+                  >
+                    <option value="">All Nakshatras</option>
+                    {uniqueNakshatras.map(nakshatra => (
+                      <option key={nakshatra} value={nakshatra}>{nakshatra}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Clear Filters */}
+                <div className="space-y-2 flex items-end">
+                  <button 
+                    onClick={() => {
+                      setGenderFilter("all");
+                      setMinAge("");
+                      setMaxAge("");
+                      setRasiFilter("");
+                      setNakshatraFilter("");
+                      setSearchTerm("");
+                    }}
+                    className="w-full bg-stone-100 hover:bg-amber-600 hover:text-white text-stone-700 border border-stone-200 rounded-xl px-4 py-3 transition-all font-bold text-xs uppercase tracking-widest shadow-inner"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
             </div>
           </header>
 
