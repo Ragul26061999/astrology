@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AppShell from "@/components/layout/AppShell";
-import { Heart, Activity, Search, AlertTriangle, CheckCircle, Calendar, MapPin, Clock } from "lucide-react";
+import { Heart, Activity, Search, AlertTriangle, CheckCircle, Calendar, MapPin, Clock, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function PairedProfilesPage() {
@@ -28,6 +28,24 @@ export default function PairedProfilesPage() {
             setError(err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRevert = async (id: string) => {
+        if (!confirm("Are you sure you want to revert this pair? Both seekers will be available for matching again.")) return;
+        
+        try {
+            const res = await fetch(`/api/matches/pairs?id=${id}`, {
+                method: "DELETE",
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchPairs();
+            } else {
+                alert(data.error || "Failed to revert pair.");
+            }
+        } catch (err: any) {
+            alert(err.message);
         }
     };
 
@@ -111,7 +129,7 @@ export default function PairedProfilesPage() {
                                             </div>
                                             
                                             {/* Connector Icon */}
-                                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full p-2 border border-amber-200 shadow-sm z-10">
+                                            <div className="absolute left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 bg-white rounded-full p-2 border border-amber-200 shadow-sm z-10">
                                                 <Heart className="size-5 fill-amber-500 text-amber-500" />
                                             </div>
 
@@ -127,10 +145,16 @@ export default function PairedProfilesPage() {
                                                 <p className="text-xs font-bold text-stone-500 mt-2">{pair.bride.nakshatram} - {pair.bride.rasi}</p>
                                             </div>
                                             
-                                            <div className="px-6 pb-6 bg-stone-50 border-t border-stone-100 flex justify-center">
-                                                <p className="text-[9px] text-stone-400 font-black uppercase tracking-widest">
+                                            <div className="px-6 pb-6 bg-stone-50 border-t border-stone-100 flex flex-col items-center gap-4">
+                                                <p className="text-[9px] text-stone-400 font-black uppercase tracking-widest mt-4">
                                                     Paired on {new Date(pair.created_at).toLocaleDateString()}
                                                 </p>
+                                                <button 
+                                                    onClick={() => handleRevert(pair.id)}
+                                                    className="w-full bg-white border border-stone-200 hover:border-red-300 hover:text-red-600 text-stone-500 font-black py-3 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest group/btn"
+                                                >
+                                                    <XCircle size={14} className="group-hover/btn:rotate-90 transition-transform"/> REVERT UNION
+                                                </button>
                                             </div>
                                         </motion.div>
                                     ))}

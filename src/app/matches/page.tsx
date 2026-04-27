@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { getAstrologyData } from "@/utils/astroMath";
 
 export default function MatchesPage() {
   const router = useRouter();
@@ -40,7 +41,13 @@ export default function MatchesPage() {
     other_country: "",
     dowry: "",
     business: "",
-    photo: ""
+    photo: "",
+    no_case: false,
+    is_widow: false,
+    no_dob: false,
+    no_parent: false,
+    siblings_count: 0,
+    siblings_details: ""
   });
   const [registering, setRegistering] = useState(false);
   const [regMessage, setRegMessage] = useState("");
@@ -60,6 +67,7 @@ export default function MatchesPage() {
 
   // Filter State
   const [minScore, setMinScore] = useState<number>(0);
+  const [minAge, setMinAge] = useState<number | "">("");
   const [maxAge, setMaxAge] = useState<number | "">("");
   const [filterRajju, setFilterRajju] = useState<boolean>(false);
   const [filterWork, setFilterWork] = useState<string>("");
@@ -176,6 +184,12 @@ export default function MatchesPage() {
       if (photoFile) {
         formData.append("photo", photoFile);
       }
+      formData.append("no_case", regForm.no_case.toString());
+      formData.append("is_widow", regForm.is_widow.toString());
+      formData.append("no_dob", regForm.no_dob.toString());
+      formData.append("no_parent", regForm.no_parent.toString());
+      formData.append("siblings_count", regForm.siblings_count.toString());
+      formData.append("siblings_details", regForm.siblings_details);
 
       const res = await fetch("/api/matches/add-profile", {
         method: "POST",
@@ -200,7 +214,13 @@ export default function MatchesPage() {
           other_country: "",
           dowry: "",
           business: "",
-          photo: ""
+          photo: "",
+          no_case: false,
+          is_widow: false,
+          no_dob: false,
+          no_parent: false,
+          siblings_count: 0,
+          siblings_details: ""
         });
         setPhotoFile(null);
         fetchProfiles();
@@ -430,128 +450,154 @@ export default function MatchesPage() {
         pdf.addPage();
       }
 
-      // Header
-      pdf.setFillColor(245, 158, 11); // Amber color
-      pdf.rect(0, 0, pageWidth, 40, 'F');
-      
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(24);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('COSMIC MATCH REPORT', pageWidth / 2, 25, { align: 'center' });
-
-      // Reset text color
-      pdf.setTextColor(0, 0, 0);
-
       // Match Number
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`Match #${i + 1} of ${filteredMatches.length}`, pageWidth / 2, 50, { align: 'center' });
+      pdf.text(`Match #${i + 1} of ${filteredMatches.length}`, pageWidth / 2, 20, { align: 'center' });
 
       // Photos Section
-      let currentY = 65;
+      let currentY = 30;
+      const imgWidth = 40;
+      const imgHeight = 50;
+
+      // Helper for adding images to PDF
+      const addProfileImage = (url: string | null, x: number, y: number, w: number, h: number) => {
+          if (url) {
+              try {
+                  pdf.addImage(url, 'JPEG', x, y, w, h);
+              } catch (e) {
+                  pdf.setFillColor(240, 240, 240);
+                  pdf.rect(x, y, w, h, 'F');
+              }
+              pdf.setDrawColor(200, 200, 200);
+              pdf.rect(x, y, w, h, 'S');
+          } else {
+              pdf.setFillColor(240, 240, 240);
+              pdf.rect(x, y, w, h, 'F');
+              pdf.setDrawColor(200, 200, 200);
+              pdf.rect(x, y, w, h, 'S');
+          }
+      };
 
       // Source Profile Photo
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(20, currentY, 60, 80, 'F');
-      pdf.setDrawColor(200, 200, 200);
-      pdf.rect(20, currentY, 60, 80, 'S');
-      
-      pdf.setFontSize(10);
+      addProfileImage(selectedProfile?.photo || null, 25, currentY, imgWidth, imgHeight);
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(sourceName, 50, currentY + 90, { align: 'center' });
-      pdf.text('(Seeker)', 50, currentY + 95, { align: 'center' });
+      pdf.text(sourceName, 45, currentY + imgHeight + 8, { align: 'center' });
+      const seekerLabel = selectedGender === 'male' ? '(Groom)' : '(Bride)';
+      pdf.text(seekerLabel, 45, currentY + imgHeight + 12, { align: 'center' });
 
       // Target Profile Photo
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(pageWidth - 80, currentY, 60, 80, 'F');
-      pdf.setDrawColor(200, 200, 200);
-      pdf.rect(pageWidth - 80, currentY, 60, 80, 'S');
-      
-      pdf.text(target.full_name || 'Unknown', pageWidth - 50, currentY + 90, { align: 'center' });
-      pdf.text('(Match)', pageWidth - 50, currentY + 95, { align: 'center' });
+      addProfileImage(target.photo || null, pageWidth - 25 - imgWidth, currentY, imgWidth, imgHeight);
+      pdf.text(target.full_name || 'Unknown', pageWidth - 45, currentY + imgHeight + 8, { align: 'center' });
+      const matchLabel = selectedGender === 'male' ? '(Bride)' : '(Groom)';
+      pdf.text(matchLabel, pageWidth - 45, currentY + imgHeight + 12, { align: 'center' });
 
-      // Heart/Connection Symbol
-      pdf.setFontSize(24);
-      pdf.text('♥', pageWidth / 2, currentY + 40, { align: 'center' });
-
-      currentY += 110;
-
-      // Compatibility Score Box
+      // Compatibility Score Section
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Compatibility Score', pageWidth / 2, currentY + 18, { align: 'center' });
+ 
       const scoreColor = m.score >= 5 && !m.rajjuFailed ? [34, 197, 94] : [245, 158, 11]; // Green or Amber
       pdf.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-      pdf.rect(pageWidth / 2 - 30, currentY, 60, 25, 'F');
+      pdf.rect(pageWidth / 2 - 20, currentY + 22, 40, 15, 'F');
       
       pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(16);
+      pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(`${m.score}/10`, pageWidth / 2, currentY + 17, { align: 'center' });
+      pdf.text(`${m.score}/10`, pageWidth / 2, currentY + 32, { align: 'center' });
       
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Compatibility Score', pageWidth / 2, currentY - 5, { align: 'center' });
 
-      currentY += 40;
+      currentY += imgHeight + 25;
 
-      // Personal Details Section
+      // Unified Intelligence Box (Demographics + Astrology)
       pdf.setFillColor(245, 245, 245);
-      pdf.rect(20, currentY, pageWidth - 40, 60, 'F');
+      pdf.rect(20, currentY, pageWidth - 40, 175, 'F');
       pdf.setDrawColor(200, 200, 200);
-      pdf.rect(20, currentY, pageWidth - 40, 60, 'S');
+      pdf.rect(20, currentY, pageWidth - 40, 175, 'S');
 
-      pdf.setFontSize(12);
+      // 1. Demographics Header
+      pdf.setFontSize(11);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Personal Details', 30, currentY + 15);
+      pdf.text('Comprehensive Seeker Intelligence', 30, currentY + 12);
 
-      pdf.setFontSize(10);
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
       
       const details = [
         `Name: ${target.full_name || 'N/A'}`,
         `Age: ${age || 'N/A'}`,
         `Gender: ${target.gender || 'N/A'}`,
+        `Status: ${target.is_widow ? 'Widow' : 'Never Married'}`,
         `Birth Date: ${target.date_of_birth || target.birth_date || 'N/A'}`,
         `Birth Place: ${target.place_of_birth_city || target.birth_place || 'N/A'}`,
         `Work: ${target.work || 'N/A'}`,
+        `Salary: ${target.salary || 'N/A'}`,
+        `Business: ${target.business || 'N/A'}`,
         `Region: ${target.region || 'N/A'}`,
-        `District: ${target.district || 'N/A'}`
+        `District: ${target.district || 'N/A'}`,
+        `Country: ${target.other_country || 'N/A'}`,
+        `Parent: ${target.no_parent ? 'No Parent' : 'Available'}`,
+        `Case: ${target.no_case ? 'No Case' : (target.case || 'Reported')}`,
+        `Siblings: ${target.siblings_count || 0}`,
+        `Dowry: ${target.dowry || 'N/A'}`
       ];
 
       details.forEach((detail, index) => {
-        const x = index < 4 ? 30 : pageWidth / 2 + 10;
-        const y = currentY + 25 + ((index % 4) * 10);
+        const x = (index % 2 === 0) ? 30 : pageWidth / 2 + 5;
+        const row = Math.floor(index / 2);
+        const y = currentY + 22 + (row * 8);
         pdf.text(detail, x, y);
       });
 
-      currentY += 75;
+      if (target.siblings_details) {
+          pdf.setFontSize(7);
+          pdf.text(`Siblings Details: ${target.siblings_details}`, 30, currentY + 92, { maxWidth: pageWidth - 60 });
+      }
 
-      // Astrological Details
-      pdf.setFillColor(245, 245, 245);
-      pdf.rect(20, currentY, pageWidth - 40, 50, 'F');
-      pdf.setDrawColor(200, 200, 200);
-      pdf.rect(20, currentY, pageWidth - 40, 50, 'S');
-
-      pdf.setFontSize(12);
+      // 2. Astrology Sub-Header
+      const astroY = currentY + 105;
+      pdf.setFontSize(11);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Astrological Details', 30, currentY + 15);
+      pdf.text('Sacred Astrological Alignment (Panchangam)', 30, astroY);
 
-      pdf.setFontSize(10);
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
       
+      let fullAstro: any = null;
+      if (target.birth_date && target.birth_time && target.latitude && target.longitude) {
+          try {
+              const timeStr = target.birth_time.split(':').length === 2 ? `${target.birth_time}:00` : target.birth_time;
+              fullAstro = getAstrologyData(`${target.birth_date}T${timeStr}+05:30`, target.latitude, target.longitude);
+          } catch (e) { console.error("Astro calc failed", e); }
+      }
+
+      const p = fullAstro?.panchangam;
       const astroDetails = [
         `Rasi: ${target.rasi || 'N/A'}`,
-        `Nakshatra: ${target.nakshatram || 'N/A'}`,
+        `Nakshatram: ${target.nakshatram || 'N/A'}`,
         `Nakshatra Pada: ${target.nakshatra_pada || 'N/A'}`,
-        `Lagnam: ${target.lagnam || 'N/A'}`
+        `Lagnam: ${target.lagnam || 'N/A'}`,
+        `Tithi: ${p?.tithi || 'N/A'}`,
+        `Yogam: ${p?.yogam || 'N/A'}`,
+        `Karanam: ${p?.karanam || 'N/A'}`,
+        `Varam: ${p?.varam || 'N/A'}`,
+        `Tamil Year: ${p?.tamilYear || 'N/A'}`,
+        `Tamil Month: ${p?.tamilMonth || 'N/A'}`
       ];
 
       astroDetails.forEach((detail, index) => {
-        const x = index < 2 ? 30 : pageWidth / 2 + 10;
-        const y = currentY + 25 + ((index % 2) * 10);
-        pdf.text(detail, x, y);
+        // Remove text in brackets () or after dashes - (Tamil scripts/symbols) for cleaner PDF
+        const cleanDetail = detail.replace(/\s*\(.*?\)\s*/g, ' ').split(' - ')[0].trim();
+        const x = 30;
+        const y = astroY + 10 + (index * 6);
+        pdf.text(cleanDetail, x, y);
       });
 
-      currentY += 65;
+      currentY += 185;
 
       // Porutham Results
       pdf.setFillColor(245, 245, 245);
@@ -605,12 +651,7 @@ export default function MatchesPage() {
       // Reset text color
       pdf.setTextColor(0, 0, 0);
 
-      // Footer
-      const footerY = pageHeight - 20;
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'italic');
-      pdf.text(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, footerY, { align: 'center' });
-      pdf.text(` Cosmic Match Engine - Match Report for ${sourceName}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      // Footer removed as requested
     }
 
     // Save the PDF
@@ -621,6 +662,7 @@ export default function MatchesPage() {
       let pass = true;
       if (minScore > 0 && m.score < minScore) pass = false;
       const age = m.targetProfile.age || calculateAge(m.targetProfile.date_of_birth || m.targetProfile.birth_date);
+      if (minAge !== "" && age < minAge) pass = false;
       if (maxAge !== "" && age > maxAge) pass = false;
       if (filterRajju && m.rajjuFailed) pass = false;
       if (filterWork && m.targetProfile.work && !m.targetProfile.work.toLowerCase().includes(filterWork.toLowerCase())) pass = false;
@@ -763,138 +805,148 @@ export default function MatchesPage() {
                             <span className="font-black uppercase tracking-widest text-xs">Advanced Search Intelligence</span>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 mb-8">
                             {/* Basic Filters */}
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Min Score</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Min Score</label>
                                 <input 
                                    type="number" 
                                    min="0" max="10" 
                                    value={minScore} 
                                    onChange={e => setMinScore(Number(e.target.value))}
-                                   className="w-14 bg-transparent px-2 py-2 text-stone-900 outline-none text-center font-black"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
+                                   placeholder="0"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Max Age</span>
-                                <input 
-                                   type="number" 
-                                   placeholder="∞"
-                                   value={maxAge} 
-                                   onChange={e => setMaxAge(e.target.value === "" ? "" : Number(e.target.value))}
-                                   className="w-14 bg-transparent px-2 py-2 text-stone-900 outline-none text-center font-black"
-                                />
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Age Range</label>
+                                <div className="flex items-center gap-2">
+                                    <input 
+                                       type="number" 
+                                       placeholder="Min"
+                                       value={minAge} 
+                                       onChange={e => setMinAge(e.target.value === "" ? "" : Number(e.target.value))}
+                                       className="w-1/2 bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
+                                    />
+                                    <span className="text-stone-300 font-bold">-</span>
+                                    <input 
+                                       type="number" 
+                                       placeholder="Max"
+                                       value={maxAge} 
+                                       onChange={e => setMaxAge(e.target.value === "" ? "" : Number(e.target.value))}
+                                       className="w-1/2 bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
+                                    />
+                                </div>
                             </div>
 
-                            {/* Demographic Filters */}
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Work</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Work</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter work"
                                    value={filterWork} 
                                    onChange={e => setFilterWork(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Case</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Case</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter case"
                                    value={filterCase} 
                                    onChange={e => setFilterCase(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Region</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Region</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter region"
                                    value={filterRegion} 
                                    onChange={e => setFilterRegion(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">District</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">District</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter district"
                                    value={filterDistrict} 
                                    onChange={e => setFilterDistrict(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Salary</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Salary</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter salary"
                                    value={filterSalary} 
                                    onChange={e => setFilterSalary(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Other Country</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Other Country</label>
                                 <input 
                                    type="text" 
-                                   placeholder="Filter country"
+                                   placeholder="Filter count"
                                    value={filterOtherCountry} 
                                    onChange={e => setFilterOtherCountry(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Dowry</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Dowry</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter dowry"
                                    value={filterDowry} 
                                    onChange={e => setFilterDowry(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Business</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Business</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter business"
                                    value={filterBusiness} 
                                    onChange={e => setFilterBusiness(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Rasi</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Rasi</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter rasi"
                                    value={filterRasi} 
                                    onChange={e => setFilterRasi(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
 
-                            <div className="flex bg-stone-50 rounded-2xl overflow-hidden border border-stone-200 focus-within:border-amber-500/30 transition-colors shadow-inner">
-                                <span className="px-3 py-2 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest border-r border-stone-200 flex items-center">Nakshatra</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-stone-400 px-1">Nakshatra</label>
                                 <input 
                                    type="text" 
                                    placeholder="Filter star"
                                    value={filterNakshatra} 
                                    onChange={e => setFilterNakshatra(e.target.value)}
-                                   className="w-24 bg-transparent px-2 py-2 text-stone-900 outline-none font-black text-sm"
+                                   className="w-full bg-stone-100/50 border border-stone-200 rounded-xl px-4 py-2.5 text-stone-900 outline-none font-bold text-sm focus:border-amber-500/30 transition-all"
                                 />
                             </div>
                         </div>
@@ -911,14 +963,7 @@ export default function MatchesPage() {
                                     Hide Rajju Failed
                                 </label>
                                 
-                                <button
-                                    onClick={exportMatchesData}
-                                    disabled={filteredMatches.length === 0}
-                                    className="group flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 disabled:bg-stone-100 disabled:text-stone-400 text-emerald-700 px-4 py-2 border border-emerald-200 disabled:border-stone-200 rounded-2xl transition-all shadow-inner text-[10px] font-black uppercase tracking-widest"
-                                >
-                                    <Download size={14} className="group-hover:scale-110 transition-transform" />
-                                    Export CSV
-                                </button>
+
                                 
                                 <button
                                     onClick={exportMatchesPDF}
@@ -1034,7 +1079,7 @@ export default function MatchesPage() {
                     />
                     <motion.div 
                         initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        className="bg-white border border-stone-200 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden relative z-10"
+                        className="bg-white border border-stone-200 rounded-[2.5rem] w-full max-w-5xl shadow-2xl overflow-hidden relative z-10"
                     >
                         <div className="p-8 md:p-10 max-h-[90vh] overflow-y-auto">
                             <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-stone-100 border border-stone-200 transition-colors">
@@ -1082,7 +1127,7 @@ export default function MatchesPage() {
                                      <div className="relative">
                                         <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 size-4 pointer-events-none" />
                                         <input 
-                                            required type="date" value={regForm.date_of_birth}
+                                            required={!regForm.no_dob} type="date" value={regForm.date_of_birth}
                                             onChange={e => setRegForm({...regForm, date_of_birth: e.target.value})}
                                             className="w-full bg-stone-50 border border-stone-200 rounded-2xl pl-12 pr-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
                                         />
@@ -1094,7 +1139,7 @@ export default function MatchesPage() {
                                      <div className="relative">
                                         <Clock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 size-4 pointer-events-none" />
                                         <input 
-                                            required type="time" value={regForm.time_of_birth}
+                                            required={!regForm.no_dob} type="time" value={regForm.time_of_birth}
                                             onChange={e => setRegForm({...regForm, time_of_birth: e.target.value})}
                                             className="w-full bg-stone-50 border border-stone-200 rounded-2xl pl-12 pr-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
                                         />
@@ -1106,7 +1151,8 @@ export default function MatchesPage() {
                                      <div className="relative">
                                         <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 size-4 pointer-events-none" />
                                         <input 
-                                            required value={regForm.place_of_birth_city}
+                                            required={!regForm.no_dob}
+                                            value={regForm.place_of_birth_city}
                                             onChange={e => setRegForm({...regForm, place_of_birth_city: e.target.value})}
                                             placeholder="City of Birth"
                                             className="w-full bg-stone-50 border border-stone-200 rounded-2xl pl-12 pr-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
@@ -1119,7 +1165,7 @@ export default function MatchesPage() {
                                          Latitude {isGeocoding && <span className="text-amber-600 animate-pulse text-[8px] ml-2 font-normal">(Auto-calculating...)</span>}
                                      </label>
                                      <input 
-                                        required value={regForm.latitude}
+                                        required={!regForm.no_dob} value={regForm.latitude}
                                         onChange={e => setRegForm({...regForm, latitude: e.target.value})}
                                         className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900 placeholder:opacity-30"
                                         placeholder="0.0000"
@@ -1131,7 +1177,7 @@ export default function MatchesPage() {
                                          Longitude {isGeocoding && <span className="text-amber-600 animate-pulse text-[8px] ml-2 font-normal">(Auto-calculating...)</span>}
                                      </label>
                                      <input 
-                                        required value={regForm.longitude}
+                                        required={!regForm.no_dob} value={regForm.longitude}
                                         onChange={e => setRegForm({...regForm, longitude: e.target.value})}
                                         className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900 placeholder:opacity-30"
                                         placeholder="0.0000"
@@ -1214,6 +1260,70 @@ export default function MatchesPage() {
                                         value={regForm.business}
                                         onChange={e => setRegForm({...regForm, business: e.target.value})}
                                         placeholder="Business Details"
+                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
+                                     />
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:col-span-2 bg-stone-50 p-6 rounded-3xl border border-stone-200">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={regForm.no_case}
+                                            onChange={e => setRegForm({...regForm, no_case: e.target.checked})}
+                                            className="w-5 h-5 rounded-lg accent-amber-600 transition-all"
+                                        />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-600 group-hover:text-amber-700 transition-colors">No Case</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={regForm.is_widow}
+                                            onChange={e => setRegForm({...regForm, is_widow: e.target.checked})}
+                                            className="w-5 h-5 rounded-lg accent-amber-600 transition-all"
+                                        />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-600 group-hover:text-amber-700 transition-colors">Widow/Widower</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={regForm.no_dob}
+                                            onChange={e => setRegForm({...regForm, no_dob: e.target.checked})}
+                                            className="w-5 h-5 rounded-lg accent-amber-600 transition-all"
+                                        />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-600 group-hover:text-amber-700 transition-colors">No DOB</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={regForm.no_parent}
+                                            onChange={e => setRegForm({...regForm, no_parent: e.target.checked})}
+                                            className="w-5 h-5 rounded-lg accent-amber-600 transition-all"
+                                        />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-600 group-hover:text-amber-700 transition-colors">No Parent</span>
+                                    </label>
+                                </div>
+
+                                <div className="space-y-2">
+                                     <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest px-1">Siblings Count</label>
+                                     <input 
+                                        type="number"
+                                        min="0"
+                                        value={regForm.siblings_count}
+                                        onChange={e => setRegForm({...regForm, siblings_count: parseInt(e.target.value) || 0})}
+                                        placeholder="0"
+                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
+                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                     <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest px-1">Siblings Details</label>
+                                     <input 
+                                        value={regForm.siblings_details}
+                                        onChange={e => setRegForm({...regForm, siblings_details: e.target.value})}
+                                        placeholder="Brothers & Sisters details"
                                         className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 focus:border-amber-500/50 outline-none transition-all shadow-inner font-bold text-stone-900"
                                      />
                                 </div>
@@ -1343,20 +1453,42 @@ export default function MatchesPage() {
                                 <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 blur-[120px] -z-10"></div>
                                 <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-500/5 blur-[120px] -z-10"></div>
                                 
-                                <div className="space-y-4 text-center md:text-left">
-                                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                                        <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200">
-                                            {selectedMatchForDetails.targetProfile.gender}
+                                <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left flex-1">
+                                    {/* Photo Display */}
+                                    <div className="relative group">
+                                        <div className="size-32 rounded-[2.5rem] bg-white border-2 border-amber-200 overflow-hidden shadow-2xl transition-transform group-hover:rotate-3">
+                                            {selectedMatchForDetails.targetProfile.photo ? (
+                                                <img 
+                                                    src={selectedMatchForDetails.targetProfile.photo} 
+                                                    alt={selectedMatchForDetails.targetProfile.full_name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-stone-50 text-stone-300 font-black text-5xl">
+                                                    {selectedMatchForDetails.targetProfile.full_name.charAt(0)}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="bg-white text-stone-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-stone-200">
-                                            Age: {selectedMatchForDetails.targetProfile.age || calculateAge(selectedMatchForDetails.targetProfile.date_of_birth || selectedMatchForDetails.targetProfile.birth_date)}
+                                        <div className="absolute -bottom-2 -right-2 bg-amber-500 text-white p-2 rounded-2xl shadow-xl">
+                                            <Activity size={16} className="animate-pulse" />
                                         </div>
                                     </div>
-                                    <h2 className="text-5xl font-black text-stone-900 italic tracking-tighter">{selectedMatchForDetails.targetProfile.full_name}</h2>
-                                    <div className="flex items-center gap-6 text-stone-500 font-bold uppercase tracking-[0.2em] text-[10px]">
-                                        <span className="flex items-center gap-2"><MapPin size={12} className="text-amber-600" /> {selectedMatchForDetails.targetProfile.birth_place}</span>
-                                        <span className="flex items-center gap-2"><Calendar size={12} className="text-amber-600" /> {selectedMatchForDetails.targetProfile.birth_date}</span>
-                                        <span className="flex items-center gap-2"><Clock size={12} className="text-amber-600" /> {selectedMatchForDetails.targetProfile.birth_time}</span>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3 justify-center md:justify-start">
+                                            <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200">
+                                                {selectedMatchForDetails.targetProfile.gender}
+                                            </div>
+                                            <div className="bg-white text-stone-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-stone-200">
+                                                Age: {selectedMatchForDetails.targetProfile.age || calculateAge(selectedMatchForDetails.targetProfile.date_of_birth || selectedMatchForDetails.targetProfile.birth_date)}
+                                            </div>
+                                        </div>
+                                        <h2 className="text-5xl font-black text-stone-900 italic tracking-tighter">{selectedMatchForDetails.targetProfile.full_name}</h2>
+                                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 text-stone-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+                                            <span className="flex items-center gap-2"><MapPin size={12} className="text-amber-600" /> {selectedMatchForDetails.targetProfile.birth_place}</span>
+                                            <span className="flex items-center gap-2"><Calendar size={12} className="text-amber-600" /> {selectedMatchForDetails.targetProfile.birth_date}</span>
+                                            <span className="flex items-center gap-2"><Clock size={12} className="text-amber-600" /> {selectedMatchForDetails.targetProfile.birth_time}</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1403,22 +1535,90 @@ export default function MatchesPage() {
                                 </div>
 
                                 <div className="md:col-span-2 space-y-8">
-                                     <div className="bg-stone-50 rounded-[2rem] border border-stone-200 p-8">
-                                         <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-6 block">Koota Agreement Breakdown</span>
-                                         <div className="grid grid-cols-2 gap-4">
-                                              {selectedMatchForDetails.poruthams.map((p: any, i: number) => (
-                                                  <div key={i} className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${p.matched ? 'bg-emerald-50 border-emerald-200' : p.isCritical && p.criticalFailed ? 'bg-red-50 border-red-200' : 'bg-white border-stone-200'}`}>
-                                                      <div className="space-y-1">
-                                                           <p className="text-xs font-black text-stone-800 uppercase tracking-tight">{p.name}</p>
-                                                           <p className="text-[10px] text-stone-500 font-bold italic">{p.description}</p>
-                                                      </div>
-                                                      <div>
-                                                           {p.matched ? <CheckCircle className="text-emerald-600 size-5" /> : <XCircle className="text-stone-300 size-5" />}
-                                                      </div>
+                                      <div className="bg-stone-50 rounded-[2rem] border border-stone-200 p-8">
+                                          <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-6 block">Koota Agreement Breakdown</span>
+                                          <div className="grid grid-cols-2 gap-4">
+                                               {selectedMatchForDetails.poruthams.map((p: any, i: number) => (
+                                                   <div key={i} className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${p.matched ? 'bg-emerald-50 border-emerald-200' : p.isCritical && p.criticalFailed ? 'bg-red-50 border-red-200' : 'bg-white border-stone-200'}`}>
+                                                       <div className="space-y-1">
+                                                            <p className="text-xs font-black text-stone-800 uppercase tracking-tight">{p.name}</p>
+                                                            <p className="text-[10px] text-stone-500 font-bold italic">{p.description}</p>
+                                                       </div>
+                                                       <div>
+                                                            {p.matched ? <CheckCircle className="text-emerald-600 size-5" /> : <XCircle className="text-stone-300 size-5" />}
+                                                       </div>
+                                                   </div>
+                                               ))}
+                                          </div>
+                                      </div>
+
+                                      <div className="bg-stone-50 rounded-[2rem] border border-stone-200 p-8">
+                                          <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-6 block">Demographic & Professional Details</span>
+                                          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                              <div>
+                                                  <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Occupation</p>
+                                                  <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.work || "N/A"}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Salary</p>
+                                                  <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.salary || "N/A"}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Business</p>
+                                                  <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.business || "N/A"}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Region</p>
+                                                  <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.region || "N/A"}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="text-[8px] text-stone-500 font-black uppercase mb-1">District</p>
+                                                  <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.district || "N/A"}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Other Country</p>
+                                                  <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.other_country || "N/A"}</p>
+                                              </div>
+                                              <div className="col-span-full">
+                                                  <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Dowry Details</p>
+                                                  <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.dowry || "No details provided"}</p>
+                                              </div>
+                                          </div>
+                                      </div>
+
+                                      <div className="bg-stone-50 rounded-[2rem] border border-stone-200 p-8">
+                                          <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-6 block">Family & Status Details</span>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                              <div className="space-y-4">
+                                                  <div>
+                                                      <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Marital Status</p>
+                                                      <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.is_widow ? "Widow / Widower" : "Never Married"}</p>
                                                   </div>
-                                              ))}
-                                         </div>
-                                     </div>
+                                                  <div>
+                                                      <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Parent Status</p>
+                                                      <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.no_parent ? "No Parent" : "Parents Available"}</p>
+                                                  </div>
+                                                  <div>
+                                                      <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Legal Case Status</p>
+                                                      <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.no_case ? "No Case" : (selectedMatchForDetails.targetProfile.case || "Case Reported")}</p>
+                                                  </div>
+                                              </div>
+                                              <div className="space-y-4">
+                                                  <div>
+                                                      <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Siblings Count</p>
+                                                      <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.siblings_count || 0}</p>
+                                                  </div>
+                                                  <div>
+                                                      <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Siblings Details</p>
+                                                      <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.siblings_details || "No details provided"}</p>
+                                                  </div>
+                                                  <div>
+                                                      <p className="text-[8px] text-stone-500 font-black uppercase mb-1">DOB Status</p>
+                                                      <p className="text-sm font-bold text-stone-900">{selectedMatchForDetails.targetProfile.no_dob ? "DOB Not Available" : "DOB Provided"}</p>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
 
                                      <div className="bg-stone-50 rounded-[2rem] border border-stone-200 p-8 text-center shadow-inner">
                                           <p className="text-xs text-stone-600 font-bold leading-relaxed italic">

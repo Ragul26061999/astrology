@@ -41,7 +41,13 @@ export async function POST(request: Request) {
             { key: 'other_country', aliases: ['other_country'] },
             { key: 'dowry', aliases: ['dowry'] },
             { key: 'business', aliases: ['business'] },
-            { key: 'photo', aliases: ['photo'] }
+            { key: 'photo', aliases: ['photo'] },
+            { key: 'no_case', aliases: ['no_case', 'nocase'] },
+            { key: 'is_widow', aliases: ['is_widow', 'widow', 'widower'] },
+            { key: 'no_dob', aliases: ['no_dob', 'nodob', 'no_date_of_birth'] },
+            { key: 'no_parent', aliases: ['no_parent', 'noparent'] },
+            { key: 'siblings_count', aliases: ['siblings_count', 'siblings', 'brother_sister_count'] },
+            { key: 'siblings_details', aliases: ['siblings_details', 'brother_sister_details'] }
         ];
 
         const missingKeys = [];
@@ -94,43 +100,56 @@ export async function POST(request: Request) {
 
         for (const record of parsedData) {
             try {
-                // Ensure date format is correct. Expected format from input: YYYY-MM-DD
-                let parsedDate = record.date_of_birth;
-                if (parsedDate && parsedDate.includes('/')) {
-                    const [dd, mm, yyyy] = parsedDate.split('/');
-                    parsedDate = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
-                }
+                const no_dob = record.no_dob === 'true' || record.no_dob === '1' || record.no_dob === 'Yes';
                 
-                let timeStr = record.time_of_birth;
-                // If time is HH:MM, append :00. If already HH:MM:SS, leave it.
-                if (timeStr && timeStr.split(':').length === 2) {
-                    timeStr = `${timeStr}:00`;
-                }
-                
-                const isoString = `${parsedDate}T${timeStr}+05:30`;
-                const lat = parseFloat(record.latitude);
-                const lng = parseFloat(record.longitude);
+                let astroData: any = null;
+                let nakshatraName = null;
+                let pada = null;
+                let age = null;
+                let rasi = null;
+                let lagnam = null;
 
-                if (isNaN(lat) || isNaN(lng)) continue;
+                if (!no_dob && record.date_of_birth && record.time_of_birth && record.latitude && record.longitude) {
+                    // Ensure date format is correct. Expected format from input: YYYY-MM-DD
+                    let parsedDate = record.date_of_birth;
+                    if (parsedDate && parsedDate.includes('/')) {
+                        const [dd, mm, yyyy] = parsedDate.split('/');
+                        parsedDate = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+                    }
+                    
+                    let timeStr = record.time_of_birth;
+                    // If time is HH:MM, append :00. If already HH:MM:SS, leave it.
+                    if (timeStr && timeStr.split(':').length === 2) {
+                        timeStr = `${timeStr}:00`;
+                    }
+                    
+                    const isoString = `${parsedDate}T${timeStr}+05:30`;
+                    const lat = parseFloat(record.latitude);
+                    const lng = parseFloat(record.longitude);
 
-                const astroData = getAstrologyData(isoString, lat, lng);
-                
-                // Parse Nakshatram and Pada from result (e.g. "Ashwini (அசுவினி) p1")
-                const nakshatraStr = astroData.panchangam.nakshatram;
-                const pIndex = nakshatraStr.lastIndexOf('p');
-                let nakshatraName = nakshatraStr;
-                let pada = 1;
-                if (pIndex > -1) {
-                    nakshatraName = nakshatraStr.substring(0, pIndex).trim();
-                    pada = parseInt(nakshatraStr.substring(pIndex + 1));
-                }
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        astroData = getAstrologyData(isoString, lat, lng);
+                        
+                        // Parse Nakshatram and Pada from result
+                        const nakshatraStr = astroData.panchangam.nakshatram;
+                        const pIndex = nakshatraStr.lastIndexOf('p');
+                        nakshatraName = nakshatraStr;
+                        pada = 1;
+                        if (pIndex > -1) {
+                            nakshatraName = nakshatraStr.substring(0, pIndex).trim();
+                            pada = parseInt(nakshatraStr.substring(pIndex + 1));
+                        }
+                        rasi = astroData.panchangam.rasi;
+                        lagnam = astroData.panchangam.lagnam;
 
-                const birthDateObj = new Date(parsedDate);
-                const today = new Date();
-                let age = today.getFullYear() - birthDateObj.getFullYear();
-                const mMonth = today.getMonth() - birthDateObj.getMonth();
-                if (mMonth < 0 || (mMonth === 0 && today.getDate() < birthDateObj.getDate())) {
-                    age--;
+                        const birthDateObj = new Date(parsedDate);
+                        const today = new Date();
+                        age = today.getFullYear() - birthDateObj.getFullYear();
+                        const mMonth = today.getMonth() - birthDateObj.getMonth();
+                        if (mMonth < 0 || (mMonth === 0 && today.getDate() < birthDateObj.getDate())) {
+                            age--;
+                        }
+                    }
                 }
 
                 recordsToInsert.push({
@@ -155,7 +174,13 @@ export async function POST(request: Request) {
                     other_country: record.other_country || null,
                     dowry: record.dowry || null,
                     business: record.business || null,
-                    photo: record.photo || null
+                    photo: record.photo || null,
+                    no_case: record.no_case === 'true' || record.no_case === '1' || record.no_case === 'Yes',
+                    is_widow: record.is_widow === 'true' || record.is_widow === '1' || record.is_widow === 'Yes',
+                    no_dob: no_dob,
+                    no_parent: record.no_parent === 'true' || record.no_parent === '1' || record.no_parent === 'Yes',
+                    siblings_count: parseInt(record.siblings_count) || 0,
+                    siblings_details: record.siblings_details || null
                 });
 
             } catch (err) {

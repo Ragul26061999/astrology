@@ -22,38 +22,57 @@ export async function POST(request: Request) {
         const dowry = formData.get('dowry') as string;
         const business = formData.get('business') as string;
         const photoFile = formData.get('photo') as File | null;
+        
+        // New V2 fields
+        const no_case = formData.get('no_case') === 'true';
+        const is_widow = formData.get('is_widow') === 'true';
+        const no_dob = formData.get('no_dob') === 'true';
+        const no_parent = formData.get('no_parent') === 'true';
+        const siblings_count = parseInt(formData.get('siblings_count') as string) || 0;
+        const siblings_details = formData.get('siblings_details') as string;
 
-        if (!full_name || !gender || !date_of_birth || !time_of_birth || !latitude || !longitude) {
+        if (!full_name || !gender || (!no_dob && (!date_of_birth || !time_of_birth || !latitude || !longitude))) {
             return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
         }
 
-        const lat = parseFloat(latitude);
-        const lng = parseFloat(longitude);
-        
-        let timeStr = time_of_birth;
-        if (timeStr && timeStr.split(':').length === 2) {
-            timeStr = `${timeStr}:00`;
-        }
-        
-        const isoString = `${date_of_birth}T${timeStr}+05:30`;
-        const astroData = getAstrologyData(isoString, lat, lng);
+        let astroData: any = null;
+        let nakshatraName = null;
+        let pada = null;
+        let rasi = null;
+        let lagnam = null;
+        let age = null;
 
-        // Parse Nakshatram and Pada from result
-        const nakshatraStr = astroData.panchangam.nakshatram;
-        const pIndex = nakshatraStr.lastIndexOf('p');
-        let nakshatraName = nakshatraStr;
-        let pada = 1;
-        if (pIndex > -1) {
-            nakshatraName = nakshatraStr.substring(0, pIndex).trim();
-            pada = parseInt(nakshatraStr.substring(pIndex + 1));
-        }
+        if (!no_dob && date_of_birth && time_of_birth && latitude && longitude) {
+            const lat = parseFloat(latitude);
+            const lng = parseFloat(longitude);
+            
+            let timeStr = time_of_birth;
+            if (timeStr && timeStr.split(':').length === 2) {
+                timeStr = `${timeStr}:00`;
+            }
+            
+            const isoString = `${date_of_birth}T${timeStr}+05:30`;
+            astroData = getAstrologyData(isoString, lat, lng);
 
-        const birthDateObj = new Date(date_of_birth);
-        const today = new Date();
-        let age = today.getFullYear() - birthDateObj.getFullYear();
-        const m = today.getMonth() - birthDateObj.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
-            age--;
+            // Parse Nakshatram and Pada from result
+            const nakshatraStr = astroData.panchangam.nakshatram;
+            const pIndex = nakshatraStr.lastIndexOf('p');
+            nakshatraName = nakshatraStr;
+            pada = 1;
+            if (pIndex > -1) {
+                nakshatraName = nakshatraStr.substring(0, pIndex).trim();
+                pada = parseInt(nakshatraStr.substring(pIndex + 1));
+            }
+            rasi = astroData.panchangam.rasi;
+            lagnam = astroData.panchangam.lagnam;
+
+            const birthDateObj = new Date(date_of_birth);
+            const today = new Date();
+            age = today.getFullYear() - birthDateObj.getFullYear();
+            const m = today.getMonth() - birthDateObj.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+                age--;
+            }
         }
 
         const supabase = await createClient();
@@ -81,15 +100,15 @@ export async function POST(request: Request) {
         const { data, error } = await supabase.from('match_profiles').insert([{
             full_name,
             gender,
-            birth_date: date_of_birth,
-            birth_time: time_of_birth,
-            birth_place: place_of_birth_city,
-            latitude: lat,
-            longitude: lng,
-            rasi: astroData.panchangam.rasi,
+            birth_date: no_dob ? null : date_of_birth,
+            birth_time: no_dob ? null : time_of_birth,
+            birth_place: no_dob ? null : place_of_birth_city,
+            latitude: no_dob ? null : parseFloat(latitude),
+            longitude: no_dob ? null : parseFloat(longitude),
+            rasi: rasi,
             nakshatram: nakshatraName,
             nakshatra_pada: pada,
-            lagnam: astroData.panchangam.lagnam,
+            lagnam: lagnam,
             age: age,
             dosham_status: false,
             work: work || null,
@@ -100,7 +119,13 @@ export async function POST(request: Request) {
             other_country: other_country || null,
             dowry: dowry || null,
             business: business || null,
-            photo: photoUrl
+            photo: photoUrl,
+            no_case,
+            is_widow,
+            no_dob,
+            no_parent,
+            siblings_count,
+            siblings_details
         }]).select();
 
         if (error) throw error;

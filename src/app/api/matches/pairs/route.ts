@@ -71,3 +71,26 @@ export async function GET() {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ success: false, error: 'Pair ID is required' }, { status: 400 });
+        }
+
+        const supabase = await createClient();
+        const { error } = await supabase
+            .from('paired_profiles')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true, message: 'Pair reverted successfully' });
+    } catch (error: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
